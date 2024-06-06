@@ -19,7 +19,7 @@ const transferBalance=async (req,res)=>{
    session.startTransaction();
    const { amount,to }=req.body;
    const account=await Account.findOne({
-    userId:res.userId
+    userId:req.userId
    }).session(session);
    if(!account || account.balance<amount){
     await session.abortTransaction();

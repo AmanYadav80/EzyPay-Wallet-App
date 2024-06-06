@@ -22,7 +22,7 @@ const createUser=async (req,res)=>{
         const userId=newUser._id;
         await Account.create({
             userId,
-            balance:1+Math.random()*1000,
+            balance:Math.floor(1+Math.random()*1000),
         })
         await newUser.save();
         //jwt 
@@ -51,7 +51,7 @@ const verifyUser=async(req,res)=>{
             })
         }
         else {
-            if(await existingUser.validatePassword(password)){
+            if(existingUser.password==password){
                 const token=jwt.sign({
                     userId:existingUser._id,
                     username:existingUser.username,
@@ -80,46 +80,59 @@ const updateBody=z.object({
     firstName:z.string().optional(),
     lastName:z.string().optional(),
 })
-const updateUser=async (req,res)=>{
-   const { success }=updateBody.safeParse(req.body);
-   if(!success){
-    res.status(411).json({
-        msg:"Error while updating the information",
-    })
-    await User.updateOne(
-        req.body,
-        {
-            _id:req.userId
+const updateUser = async (req, res) => {
+    try {
+        // console.log("Request Body", req.body);
+        const { success } = updateBody.safeParse(req.body);
+
+        if (!success) {
+            return res.status(411).json({
+                msg: "Error while updating the information",
+            });
         }
-    )
-   }
-   res.status(200).json({
-    msg:"User information updated successfully"
-   });
-}
-const getUsers=async (req,res)=>{
-    const filter=req.query.filter || "";
-    const allUsers=await User.find(
-        {
-            $or:[
-                {
-                    'firstName':filter,
-                },
-                {
-                    'lastName':filter,
-                }
+
+        await User.updateOne(
+            { _id: req.userId },
+            req.body
+        );
+
+        res.status(200).json({
+            msg: "User information updated successfully"
+        });
+    } catch (err) {
+        res.status(500).json({
+            msg: "Error updating the user information",
+            error: err.message
+        });
+    }
+};
+
+const getUsers = async (req, res) => {
+    try {
+        const filter = req.query.filter || "";
+        const allUsers = await User.find({
+            $or: [
+                { 'firstName': { $regex: filter, $options: 'i' } },
+                { 'lastName': { $regex: filter, $options: 'i' } }
             ]
-        }
-    )
-    res.status(200).json({
-        users:allUsers.map(user=>({
-            username:user.username,
-            firstName:user.firstName,
-            lastName:user.lastName,
-            _id:user._id,
-        }))
-    })
-}
+        });
+
+        res.status(200).json({
+            users: allUsers.map(user => ({
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                _id: user._id,
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({
+            msg: "Error fetching users",
+            error: error.message
+        });
+    }
+};
+
 module.exports={
     createUser,
     verifyUser,
