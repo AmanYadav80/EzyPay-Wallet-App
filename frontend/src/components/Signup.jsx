@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
 const Signup = () => {
   const [username, setUsername] = useState("");
   const [firstName, setfirstName] = useState("");
   const [lastName, setlastName] = useState("");
   const [password, setPassword] = useState("");
-  const navigate=useNavigate();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const handleFormSubmit = async () => {
     const response = await fetch("http://localhost:3000/api/v1/user/signup", {
       method: "POST",
@@ -19,15 +22,17 @@ const Signup = () => {
         password,
       }),
     });
-     if(response.ok){
-      navigate('/dashboard');
-     }
-     else{
-      navigate('/error');
-     }
+    if (response.ok) {
+      const data=await response.json();
+      localStorage.setItem('jwtToken',data.token);
+      dispatch(addUser(username));
+      navigate("/dashboard");
+    } else {
+      navigate("/error");
+    }
   };
   return (
-    <div className="w-full h-full flex items-center justify-center">
+    <div className="bg-[#a09e9e]  w-full h-full flex items-center justify-center">
       <div className="w-[25%] p-6 bg-white border border-gray-200 rounded-lg shadow-lg ">
         <form onSubmit={(e) => e.preventDefault()}>
           <div className=" w-[100%]">
