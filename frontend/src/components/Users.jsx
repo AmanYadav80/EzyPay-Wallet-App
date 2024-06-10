@@ -20,7 +20,6 @@ const Users = () => {
     if (response.ok) {
       const data = await response.json();
       setAllUsers(data.users);
-      // console.log(data.users);
     }
   };
   return (
